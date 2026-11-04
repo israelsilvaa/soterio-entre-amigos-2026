@@ -3,8 +3,9 @@ import { getStore } from "@netlify/blobs";
 
 // Dados fixos: mantenha igual ao PADRAO do atualizar.py.
 const PADRAO = {
+  nome: "Sorteio Mais que Vencedores",
   premio: "Yamaha Fazer 250cc 2025/2025",
-  totalNumeros: 999,
+  totalNumeros: 1000,
   valorNumero: 50,
   dataSorteio: "2026-12-20",
   atualizadoEm: null,
@@ -35,7 +36,7 @@ export default async (req) => {
   if (req.method !== "POST") return json({ error: "Método não permitido" }, 405);
   try {
     const body = await req.json();
-    // Revalida no servidor: 4 dígitos, 0001..0999, sem repetir, ordenado.
+    // Revalida no servidor: 4 dígitos, 0001..1000, sem repetir, ordenado.
     const lista = [...new Set((Array.isArray(body.disponiveis) ? body.disponiveis : [])
       .map(String).filter((s) => /^\d{4}$/.test(s)).map(Number)
       .filter((n) => n >= 1 && n <= PADRAO.totalNumeros))]
