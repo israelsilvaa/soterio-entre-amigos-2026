@@ -25,7 +25,7 @@ SAIDA = PASTA / "dados.json"
 # Dados fixos do sorteio: edite aqui e rode o script para refletir no dados.json.
 PADRAO = {
     "premio": "Yamaha Fazer 250cc 2025/2025",
-    "totalNumeros": 1000,
+    "totalNumeros": 999,  # números de 0001 a 0999 (o 1000 não existe)
     "valorNumero": 50,
     "dataSorteio": "2026-12-20",
     "atualizadoEm": None,
