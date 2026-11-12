@@ -26,6 +26,8 @@ h2{font-size:1.05rem;margin:0 0 10px;color:var(--gold2)}
 .upd i{width:9px;height:9px;border-radius:50%;background:var(--ok);animation:pl 2s infinite}
 .upd.old{background:#c48d3322;border-color:#c48d3377}.upd.old i{background:var(--gold2);animation:none}
 @keyframes pl{0%{box-shadow:0 0 0 0 #4ade80aa}70%,100%{box-shadow:0 0 0 8px #4ade8000}}
+.ganhador{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:9px 16px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold2));color:#1a1206;font-weight:800;box-shadow:0 0 0 1px #c48d3355,0 0 22px #c48d3355}
+.ganhador b{font-size:1.25rem;letter-spacing:.06em;font-variant-numeric:tabular-nums}
 #alerta{margin-top:12px;font-weight:700;color:var(--gold2)}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(90deg,var(--gold),var(--gold2));color:#1a1206;font-weight:800;text-decoration:none;padding:11px 18px;border-radius:12px;border:1px solid transparent}
@@ -81,6 +83,7 @@ ol.rg li:before{content:counter(r);position:absolute;left:0;top:7px;width:22px;h
       <h1 id="nome">Sorteio Mais que Vencedores</h1>
       <div class="premio" id="premio">Carregando…</div>
       <div class="chips" id="chips-hero"></div>
+      <div class="ganhador hide" id="ganhador">🏆 <span>Número sorteado:</span> <b id="ganhadorNum"></b></div>
       <div class="upd old" id="upd"><i></i><span>Carregando atualização…</span></div>
       <div id="alerta"></div>
       <div class="acts">
@@ -206,6 +209,11 @@ function render() {
     `<span class="chip">📅 Sorteio <b>${dataBR(d.dataSorteio)}</b> · ${quando}</span>` +
     `<span class="chip">🎟️ <b>${e.disponiveis}</b> disponíveis de ${e.total.toLocaleString("pt-BR")}</span>`;
   $("#alerta").textContent = e.disponiveis === 0 ? "🎉 Todos os números foram vendidos!" : e.disponiveis <= e.total * 0.1 ? `🔥 Restam apenas ${e.disponiveis} números!` : "";
+
+  // Selo do número sorteado: só aparece se valorNumeroSorteado não estiver vazio
+  const gan = String(d.valorNumeroSorteado == null ? "" : d.valorNumeroSorteado).trim();
+  $("#ganhador").classList.toggle("hide", !gan);
+  if (gan) $("#ganhadorNum").textContent = /^\d+$/.test(gan) ? pad(Number(gan)) : gan;
 
   const tel = d.contato && d.contato.whatsapp;
   if (tel) { $("#cta").href = `https://wa.me/${tel}?text=${encodeURIComponent("Olá! Quero escolher meu número no sorteio: " + d.premio)}`; $("#cta").classList.remove("hide"); }

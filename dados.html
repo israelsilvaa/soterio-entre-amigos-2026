@@ -17,6 +17,10 @@ button{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:12px;p
 button:disabled{opacity:.5;cursor:default}
 .lst{font-variant-numeric:tabular-nums;word-break:break-word;color:var(--mut);font-size:.9rem;margin:4px 0 12px}
 .hide{display:none!important}
+h2{font-size:1.05rem;margin:0 0 4px}
+input.num{font:inherit;width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin-top:10px;letter-spacing:.1em;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button.sec{background:transparent;color:var(--no);border:1px solid var(--no)}
 </style>
 </head>
 <body>
@@ -34,18 +38,32 @@ button:disabled{opacity:.5;cursor:default}
     <button id="atualizar">Atualizar dados</button>
     <div id="status" style="margin-top:10px;font-weight:600"></div>
   </div>
+
+  <div class="card">
+    <h2>🏆 Número sorteado</h2>
+    <div class="sub" id="sorteadoAtual">Carregando…</div>
+    <input class="num" id="sorteado" type="text" inputmode="numeric" maxlength="4" placeholder="Ex.: 0123" autocomplete="off">
+    <div class="row">
+      <button id="definir">Definir número sorteado</button>
+      <button id="reverter" class="sec hide">Reverter</button>
+    </div>
+    <div id="statusSorteado" style="margin-top:10px;font-weight:600"></div>
+  </div>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
 const MAX = 1000, pad = n => String(n).padStart(4, "0");
 const quando = iso => iso ? new Date(iso).toLocaleString("pt-BR") : "nunca";
-let atual = [], novos = [];
+let atual = [], novos = [], sorteado = "", anterior = "";
 
 async function carregarAtual() {
   try {
     const d = await (await fetch("/dados.json?t=" + Date.now(), {cache:"no-store"})).json();
     atual = d.disponiveis.filter(x => +x >= 1 && +x <= MAX);
+    sorteado = String(d.valorNumeroSorteado || "").trim();
+    anterior = String(d.valorNumeroSorteadoAnterior || "").trim();
+    mostrarSorteado();
     $("#ult").textContent = "Última atualização: " + quando(d.atualizadoEm) + " · " + atual.length + " disponíveis";
     return true;
   } catch { $("#ult").textContent = "Não consegui ler a lista atual."; return false; }
@@ -84,6 +102,37 @@ $("#atualizar").onclick = async () => {
     await carregarAtual();
   } catch (e) { $("#status").textContent = "❌ " + e.message; }
   $("#atualizar").disabled = false;
+};
+
+// ---------- Número sorteado (definir / reverter) ----------
+function mostrarSorteado() {
+  $("#sorteadoAtual").innerHTML = sorteado ? `Atual no site: <b>${sorteado}</b>` : "Nenhum número sorteado definido (o selo não aparece no site).";
+  $("#reverter").classList.toggle("hide", !sorteado);
+  $("#reverter").textContent = anterior ? `Reverter para ${anterior}` : "Reverter (remover selo)";
+}
+async function salvarSorteado(novo, ant) {
+  const st = $("#statusSorteado");
+  $("#definir").disabled = $("#reverter").disabled = true; st.textContent = "Salvando…";
+  try {
+    const r = await fetch("/.netlify/functions/salvar", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({valorNumeroSorteado:novo, valorNumeroSorteadoAnterior:ant})});
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "Erro " + r.status);
+    st.textContent = "✅ Salvo."; $("#sorteado").value = "";
+    await carregarAtual();
+  } catch (e) { st.textContent = "❌ " + e.message; }
+  $("#definir").disabled = $("#reverter").disabled = false;
+}
+$("#definir").onclick = () => {
+  const v = $("#sorteado").value.trim();
+  if (!/^\d{1,4}$/.test(v) || +v < 1 || +v > MAX) return alert("Informe um número entre 0001 e " + MAX + ".");
+  const n = pad(+v);
+  if (n === sorteado) return alert("Esse número já está definido como sorteado.");
+  const msg = `Confirmar o número ${n} como GANHADOR?\n\nEle passará a aparecer no site público.` + (sorteado ? `\nIsso substitui o atual (${sorteado}); você poderá reverter.` : "");
+  if (confirm(msg)) salvarSorteado(n, sorteado);
+};
+$("#reverter").onclick = () => {
+  const msg = anterior ? `Reverter o número sorteado de ${sorteado} para ${anterior}?` : `Remover o número sorteado ${sorteado}?\n\nO selo deixará de aparecer no site.`;
+  if (confirm(msg)) salvarSorteado(anterior, "");
 };
 carregarAtual();
 </script>
